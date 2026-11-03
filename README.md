@@ -1,7 +1,5 @@
 # Backend (NestJS)
 
-See the [root README](../README.md) for run steps, API and design notes.
-
 ```bash
 cp .env.example .env
 npm install
