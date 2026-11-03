@@ -1,6 +1,7 @@
 import { Controller, Get, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { OrdersService } from './orders/orders.service.js';
 import { Product } from './schemas.js';
 
 const SEED_PRODUCTS: Product[] = [
@@ -45,6 +46,7 @@ const SEED_PRODUCTS: Product[] = [
 export class ProductsController implements OnModuleInit {
   constructor(
     @InjectModel(Product.name) private readonly products: Model<Product>,
+    private readonly orders: OrdersService,
   ) {}
 
   // Insert-if-missing, so restarts (or several instances) never reset stock
@@ -62,6 +64,8 @@ export class ProductsController implements OnModuleInit {
 
   @Get()
   async list() {
+    // Release stock from expired orders so the catalog shows real availability
+    await this.orders.expireDueOrders();
     const products = await this.products.find().sort({ _id: 1 }).lean();
     return {
       data: products.map((p) => ({

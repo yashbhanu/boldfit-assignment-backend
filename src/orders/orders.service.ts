@@ -36,6 +36,7 @@ export class OrdersService implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   // Periodically expire unpaid orders so their stock goes back on sale.
+  // On serverless (Vercel) this timer doesn't run between requests, so expireDueOrders() is also called before checking stock in create().
   onModuleInit() {
     this.sweeper = setInterval(() => void this.expireDueOrders(), 30_000);
     this.sweeper.unref();
@@ -54,6 +55,8 @@ export class OrdersService implements OnModuleInit, OnModuleDestroy {
     const requestHash = createHash('sha256')
       .update(JSON.stringify(lines))
       .digest('hex');
+    // Free stock held by abandoned orders before checking availability
+    await this.expireDueOrders();
     const attempt = () =>
       this.db.transaction(() =>
         this.createOrReturnExisting(

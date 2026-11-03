@@ -10,8 +10,8 @@ import { randomUUID } from 'node:crypto';
 import { Order, Payment, PaymentStatus, Product } from '../src/schemas.js';
 import { sign } from '../src/payments/signature.js';
 
-const ALICE = 'Bearer dev-token-alice';
-const BOB = 'Bearer dev-token-bob';
+const GUEST = 'Bearer dev-token-guest';
+const YASH = 'Bearer dev-token-yash';
 const SECRET = 'test_webhook_secret';
 const KEY_SECRET = 'test_key_secret';
 
@@ -78,7 +78,7 @@ describe('Checkout flow (e2e)', () => {
 
   afterEach(() => app.close());
 
-  const createOrder = (key: string, items: object[], token = ALICE) =>
+  const createOrder = (key: string, items: object[], token = GUEST) =>
     http
       .post('/api/orders')
       .set('Authorization', token)
@@ -86,7 +86,7 @@ describe('Checkout flow (e2e)', () => {
       .send({ items });
 
   const createIntent = (orderId: string) =>
-    http.post(`/api/orders/${orderId}/payments`).set('Authorization', ALICE);
+    http.post(`/api/orders/${orderId}/payments`).set('Authorization', GUEST);
 
   const sendWebhook = (eventId: string, event: object, secret = SECRET) => {
     const body = JSON.stringify(event);
@@ -99,7 +99,7 @@ describe('Checkout flow (e2e)', () => {
   };
 
   const getOrder = (id: string) =>
-    http.get(`/api/orders/${id}`).set('Authorization', ALICE);
+    http.get(`/api/orders/${id}`).set('Authorization', GUEST);
 
   const model = <T>(cls: { name: string }) =>
     app.get<Model<T>>(getModelToken(cls.name));
@@ -148,7 +148,7 @@ describe('Checkout flow (e2e)', () => {
     it('requires an Idempotency-Key and validates the body', async () => {
       await http
         .post('/api/orders')
-        .set('Authorization', ALICE)
+        .set('Authorization', GUEST)
         .send({ items: [{ sku: 'SHAKER', quantity: 1 }] })
         .expect(400);
       await createOrder('key-invalid-body', [
@@ -226,7 +226,7 @@ describe('Checkout flow (e2e)', () => {
       ]).expect(201);
       await http
         .get(`/api/orders/${body.id}`)
-        .set('Authorization', BOB)
+        .set('Authorization', YASH)
         .expect(404);
     });
 
@@ -380,7 +380,7 @@ describe('Checkout flow (e2e)', () => {
     const verify = (orderId: string, body: object) =>
       http
         .post(`/api/orders/${orderId}/payments/verify`)
-        .set('Authorization', ALICE)
+        .set('Authorization', GUEST)
         .send(body);
 
     it('rejects a forged callback signature', async () => {
