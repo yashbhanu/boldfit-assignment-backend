@@ -1,0 +1,24 @@
+{
+  "actionId": "act_7f3c9a12",
+  "type": "RETRY_FAILED_PAYMENT",
+  "orderId": "ord_9e6ca9c2e59347b4",
+  "paymentId": "pay_b53cb2ad869849da",
+  "amount": 69800,
+  "currency": "INR",
+  "reason": "Payment failed with a bank gateway timeout, which is usually transient. Order is still within its reservation window.",
+  "evidence": {
+    "lastFailureReason": "Gateway timeout at issuing bank",
+    "failedAttempts": 1,
+    "orderStatus": "PENDING_PAYMENT"
+  },
+  "proposedBy": "agent:payments-ops",
+  "proposedAt": "2026-11-03T17:25:00Z",
+  "status": "APPROVED",
+  "approval": {
+    "approvedBy": "ops.lead@example.com",
+    "decision": "APPROVE",
+    "decidedAt": "2026-11-03T17:27:10Z",
+    "note": "Customer confirmed on chat they want to retry."
+  },
+  "expiresAt": "2026-11-03T17:35:00Z"
+}

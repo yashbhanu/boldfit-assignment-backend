@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "retry-failed-payment.schema.json",
+  "title": "RetryFailedPaymentAction",
+  "description": "An action an internal agent can PROPOSE to retry a failed payment. It does nothing until a human approves it. The executor re-checks the order state before acting.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["actionId", "type", "orderId", "paymentId", "reason", "proposedBy", "proposedAt", "status", "approval"],
+  "properties": {
+    "actionId": {
+      "type": "string",
+      "description": "Unique id. Doubles as the idempotency key when the action is executed, so it can only run once."
+    },
+    "type": { "const": "RETRY_FAILED_PAYMENT" },
+    "orderId": { "type": "string", "pattern": "^ord_" },
+    "paymentId": { "type": "string", "pattern": "^pay_" },
+    "amount": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "In paise. Must equal the order total; the executor rejects the action if it doesn't."
+    },
+    "currency": { "const": "INR" },
+    "reason": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 500,
+      "description": "Why the agent thinks a retry is safe, e.g. the failure code was a transient bank timeout."
+    },
+    "evidence": {
+      "type": "object",
+      "description": "What the agent looked at, so the approver doesn't have to dig.",
+      "properties": {
+        "lastFailureReason": { "type": "string" },
+        "failedAttempts": { "type": "integer", "minimum": 1 },
+        "orderStatus": { "const": "PENDING_PAYMENT" }
+      }
+    },
+    "proposedBy": { "type": "string", "description": "Agent id, e.g. agent:payments-ops" },
+    "proposedAt": { "type": "string", "format": "date-time" },
+    "status": {
+      "enum": ["PROPOSED", "APPROVED", "REJECTED", "EXECUTED", "EXPIRED"],
+      "description": "Only PROPOSED -> APPROVED|REJECTED|EXPIRED and APPROVED -> EXECUTED are allowed."
+    },
+    "approval": {
+      "type": ["object", "null"],
+      "description": "Filled in by a human. Must be null while status is PROPOSED.",
+      "additionalProperties": false,
+      "required": ["approvedBy", "decidedAt", "decision"],
+      "properties": {
+        "approvedBy": {
+          "type": "string",
+          "format": "email",
+          "description": "A human. Must not equal proposedBy."
+        },
+        "decision": { "enum": ["APPROVE", "REJECT"] },
+        "decidedAt": { "type": "string", "format": "date-time" },
+        "note": { "type": "string" }
+      }
+    },
+    "expiresAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Approval window. An action approved after this time is not executed."
+    }
+  }
+}
